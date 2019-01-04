@@ -5,8 +5,8 @@
 
 <p>You want lives?</p>
 <h5><strong>TOO BAD!</strong></h5>
-
+<br>
 <p>You want to see what block comes next?</p>
 <h5><strong>TOO BAD!</strong></h5>
-
+<br>
 <p>If you feel like frustrating youself, play this game.</p>
