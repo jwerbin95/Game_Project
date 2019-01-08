@@ -1,0 +1,11 @@
+.gameContainer {
+	position: fixed;
+	border: solid;
+	width: 40%;
+	height: 80%;
+	bottom: 10%;
+	margin-left: 30%;
+}
+#canvas {
+	border: solid;
+}
