@@ -6,6 +6,8 @@ let directionX = 0;
 let directionY = 1;
 let rotateFlag = false;
 let blockCounter = 0;
+let directionCount = 0;
+let previousX = 0;
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 class Block {
@@ -56,13 +58,20 @@ $(document).keydown(function(event) {
 	}
 	if (event.keyCode === 82) {
 		if (rotateFlag) {
-			ctx.translate(x + 15, y + 15);
-			ctx.rotate((90 * Math.PI) / 180);
-			ctx.translate(-(x + 15), -(y + 15));
+			x = previousX;
+			y += directionCount;
+			previousX = 0;
+			//ctx.save();
+			// ctx.translate(x + 15, y + 15);
+			// ctx.rotate((90 * Math.PI) / 180);
+			// ctx.translate(-(x + 15), -(y + 15));
 			directionX = 0;
 			directionY = 1;
 			rotateFlag = false;
+			ctx.restore();
 		} else {
+			previousX = x;
+			ctx.save();
 			ctx.translate(x + 15, y + 15);
 			ctx.rotate((-90 * Math.PI) / 180);
 			ctx.translate(-(x + 15), -(y + 15));
@@ -353,8 +362,9 @@ function twos(block) {
 		(currentBlock.x2 >= block.x2 &&
 			currentBlock.y2 < block.y2 &&
 			currentBlock.x2 < block.x2 + squareDimensions &&
-			currentBlock.y2 > block.y2 - squareDimensions) || //currentBlock.x2 >= block.x3 &&
-		(currentBlock.y2 < block.y3 &&
+			currentBlock.y2 > block.y2 - squareDimensions) ||
+		(currentBlock.x2 >= block.x3 &&
+			currentBlock.y2 < block.y3 &&
 			currentBlock.x2 < block.x3 + squareDimensions &&
 			currentBlock.y2 > block.y3 - squareDimensions) ||
 		(currentBlock.x2 >= block.x4 &&
@@ -385,7 +395,7 @@ function threes(block) {
 }
 function fours(block) {
 	return (
-		(currentBlock.x4 >= block.x1 &&
+		(currentBlock.x4 + squareDimensions > block.x1 &&
 			currentBlock.y4 < block.y1 &&
 			currentBlock.x4 < block.x1 + squareDimensions &&
 			currentBlock.y4 > block.y1 - squareDimensions) ||
@@ -403,13 +413,21 @@ function fours(block) {
 			currentBlock.y4 > block.y4 - squareDimensions)
 	);
 }
+let stopped = false;
 setInterval(function() {
-	if (y < 680 && !collision()) {
-		redraw(x + directionX, y + directionY);
+	if (!collision() && !stopped) {
+		if (rotateFlag) {
+			if (x > -10) redraw(x + directionX, y + directionY);
+			else stopped = true;
+			directionCount++;
+		} else {
+			if (y < 680) redraw(x + directionX, y + directionY);
+			else stopped = true;
+			directionCount = 0;
+		}
+
 		$('.coordinates').text(
-			`${currentBlock.x2} ${currentBlock.y2} ${blockArray[0].x3 +
-				squareDimensions} ${blockArray[0].y3} ${currentBlock.x2 >=
-				blockArray.x3}`
+			`X4: ${currentBlock.x4 + squareDimensions} X1: ${blockArray[0].x1}`
 		);
 	} else {
 		blockArray.push(currentBlock);
@@ -417,5 +435,8 @@ setInterval(function() {
 		blockCounter++;
 		x = 290;
 		y = 170;
+		directionCount = 0;
+		previousX = 0;
+		stopped = false;
 	}
 }, 100);
