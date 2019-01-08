@@ -6,7 +6,7 @@ let bottom = 25;
 let boundRight = 16;
 let boundLeft = 0;
 let squareDimensions = 30;
-let shape = 'T';
+let shape = 'Z';
 class Block {
 	constructor(x1, y1, x2, y2, x3, y3, x4, y4) {
 		this.x1 = x1;
@@ -132,7 +132,7 @@ function drawSquare(newX, newY) {
 		squareDimensions
 	);
 	currentBlock.x3 = 0;
-	currentBlock.y3 = -1;
+	currentBlock.y3 = 1;
 	ctx.fillRect(
 		newX + squareDimensions,
 		newY - squareDimensions,
@@ -140,7 +140,7 @@ function drawSquare(newX, newY) {
 		squareDimensions
 	);
 	currentBlock.x4 = 1;
-	currentBlock.y4 = -1;
+	currentBlock.y4 = 1;
 }
 function clearSquare() {
 	ctx.clearRect(x, y, squareDimensions, squareDimensions);
@@ -246,7 +246,7 @@ function clearT() {
 function drawZ(newX, newY) {
 	ctx.fillRect(newX, newY, squareDimensions, squareDimensions);
 	currentBlock.x1 = 0;
-	currentBlock.y1 = 0;
+	currentBlock.y1 = 1;
 	ctx.fillRect(
 		newX,
 		newY + squareDimensions,
@@ -254,7 +254,7 @@ function drawZ(newX, newY) {
 		squareDimensions
 	);
 	currentBlock.x2 = 0;
-	currentBlock.y2 = 1;
+	currentBlock.y2 = 2;
 	ctx.fillRect(
 		newX + squareDimensions,
 		newY + squareDimensions,
@@ -262,7 +262,7 @@ function drawZ(newX, newY) {
 		squareDimensions
 	);
 	currentBlock.x3 = 1;
-	currentBlock.y3 = 1;
+	currentBlock.y3 = 0;
 	ctx.fillRect(
 		newX + squareDimensions,
 		newY + squareDimensions * 2,
@@ -270,7 +270,7 @@ function drawZ(newX, newY) {
 		squareDimensions
 	);
 	currentBlock.x4 = 1;
-	currentBlock.y4 = 2;
+	currentBlock.y4 = 1;
 }
 function clearZ() {
 	ctx.clearRect(x, y, squareDimensions, squareDimensions);
