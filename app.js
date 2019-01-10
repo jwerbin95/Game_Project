@@ -81,7 +81,59 @@ $(document).keydown(function(event) {
 		}
 	}
 });
-
+function redrawAll(newX, newY) {
+	for (let i = 0; i < blockArray.length; i++) {
+		ctx.fillStyle = blockArray[i].fillStyle;
+		ctx.clearRect(
+			blockArray[i].x1,
+			blockArray[i].y1,
+			squareDimensions,
+			squareDimensions
+		);
+		ctx.clearRect(
+			blockArray[i].x2,
+			blockArray[i].y2,
+			squareDimensions,
+			squareDimensions
+		);
+		ctx.clearRect(
+			blockArray[i].x3,
+			blockArray[i].y3,
+			squareDimensions,
+			squareDimensions
+		);
+		ctx.clearRect(
+			blockArray[i].x4,
+			blockArray[i].y4,
+			squareDimensions,
+			squareDimensions
+		);
+		ctx.fillRect(
+			blockArray[i].x1 + newX,
+			blockArray[i].y1 + newY,
+			squareDimensions,
+			squareDimensions
+		);
+		ctx.fillRect(
+			blockArray[i].x2 + newX,
+			blockArray[i].y2 + newY,
+			squareDimensions,
+			squareDimensions
+		);
+		ctx.fillRect(
+			blockArray[i].x3 + newX,
+			blockArray[i].y3 + newY,
+			squareDimensions,
+			squareDimensions
+		);
+		ctx.fillRect(
+			blockArray[i].x4 + newX,
+			blockArray[i].y4 + newY,
+			squareDimensions,
+			squareDimensions
+		);
+	}
+}
 function redraw(newX, newY) {
 	if (shape === 'L') {
 		clearL();
