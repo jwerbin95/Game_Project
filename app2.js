@@ -27,6 +27,7 @@ class Block {
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 ctx.fillStyle = 'green';
+let blockArray = [];
 let grid = [];
 for (let i = 0; i <= 19; i++) {
 	grid[i] = [];
@@ -44,7 +45,7 @@ $(document).keydown(function(event) {
 	$('.coordinates').text(`${coordY} ${coordX}`);
 });
 $(document).keydown(function(event) {
-	if (event.keyCode == 37 && coordX > boundLeft) {
+	if (event.keyCode == 37 && coordX > boundLeft && !collisionLeft()) {
 		redraw(x - squareDimensions, y);
 		coordX--;
 	}
@@ -56,13 +57,14 @@ $(document).keydown(function(event) {
 	}
 });
 $(document).keydown(function(event) {
-	if (event.keyCode === 82) {
+	if (event.keyCode === 82 && !cantRotate()) {
 		if (!rotateFlag) {
 			if (shape === 'L') {
 				clearUnrotatedL();
 				coordY += 2;
 				boundLeft = 1;
 				boundRight = 19;
+				console.log(coordX);
 			}
 			if (shape === 'line') {
 				clearUnrotatedLine();
@@ -129,7 +131,142 @@ function redraw(newX, newY) {
 	x = newX;
 	y = newY;
 }
+function gridPlacement() {
+	if (shape === 'L') {
+		if (!rotateFlag) {
+			currentBlock.x3 = 2;
+			currentBlock.y3 = 0;
+			currentBlock.x2 = 1;
+			currentBlock.y2 = 0;
+			currentBlock.x1 = 0;
+			currentBlock.y1 = 0;
+			currentBlock.x4 = 0;
+			currentBlock.y4 = 1;
+		} else {
+			currentBlock.x3 = 0;
+			currentBlock.y3 = 2;
+			currentBlock.x2 = 0;
+			currentBlock.y2 = 1;
+			currentBlock.x1 = 0;
+			currentBlock.y1 = 0;
+			currentBlock.x4 = -1;
+			currentBlock.y4 = 2;
+		}
+	}
+	if (shape === 'line') {
+		if (!rotateFlag) {
+			currentBlock.x2 = 1;
+			currentBlock.y2 = 0;
+			currentBlock.x3 = 2;
+			currentBlock.y3 = 0;
+			currentBlock.x1 = 0;
+			currentBlock.y1 = 0;
+			currentBlock.x4 = 3;
+			currentBlock.y4 = 0;
+		} else {
+			currentBlock.x2 = 0;
+			currentBlock.y2 = 1;
+			currentBlock.x3 = 0;
+			currentBlock.y3 = 2;
+			currentBlock.x1 = 0;
+			currentBlock.y1 = 0;
+			currentBlock.x4 = 0;
+			currentBlock.y4 = 3;
+		}
+	}
+	if (shape === 'T') {
+		if (!rotateFlag) {
+			currentBlock.x2 = 1;
+			currentBlock.y2 = 0;
+			currentBlock.x3 = 2;
+			currentBlock.y3 = 1;
+			currentBlock.x1 = 0;
+			currentBlock.y1 = 1;
+			currentBlock.x4 = 1;
+			currentBlock.y4 = 1;
+		} else {
+			currentBlock.x2 = 0;
+			currentBlock.y2 = 1;
+			currentBlock.x3 = 0;
+			currentBlock.y3 = 2;
+			currentBlock.x1 = 0;
+			currentBlock.y1 = 0;
+			currentBlock.x4 = 1;
+			currentBlock.y4 = 1;
+		}
+	}
+	if (shape === 'Z') {
+		if (!rotateFlag) {
+			currentBlock.x2 = 1;
+			currentBlock.y2 = 1;
+			currentBlock.x3 = 0;
+			currentBlock.y3 = 1;
+			currentBlock.x1 = 1;
+			currentBlock.y1 = 0;
+			currentBlock.x4 = 0;
+			currentBlock.y4 = 2;
+		} else {
+			currentBlock.x2 = 1;
+			currentBlock.y2 = 0;
+			currentBlock.x3 = 1;
+			currentBlock.y3 = 1;
+			currentBlock.x1 = 0;
+			currentBlock.y1 = 1;
+			currentBlock.x4 = 2;
+			currentBlock.y4 = 0;
+		}
+	}
+}
+function cantRotate() {
+	rotateFlag = !rotateFlag;
+	if (coordX <= 4 || coordX >= 15 || coordY >= 25) {
+		rotateFlag = !rotateFlag;
+		gridPlacement();
+		return true;
+	}
+	gridPlacement();
+	if (
+		grid[coordX + currentBlock.x1][coordY - currentBlock.y1] === true ||
+		grid[coordX + currentBlock.x2][coordY - currentBlock.y2] === true ||
+		grid[coordX + currentBlock.x3][coordY - currentBlock.y3] === true ||
+		grid[coordX + currentBlock.x4][coordY - currentBlock.y4] === true
+	) {
+		rotateFlag = !rotateFlag;
+		gridPlacement();
+		return true;
+	} else {
+		rotateFlag = !rotateFlag;
+		return false;
+	}
+}
+function lineClear() {
+	let line = 0;
+	let lineCount = grid[0].length - 2;
+	for (let i = 0; i < grid.length; i++) {
+		for (let j = 0; j < grid.length; j++) {
+			if (grid[j][lineCount] === true) line++;
+		}
+		if (line === grid.length) {
+			ctx.clearRect(
+				0,
+				(bottom - 1 - i) * squareDimensions,
+				squareDimensions * 20,
+				squareDimensions
+			);
+			clearPlacement(lineCount);
 
+			lineCount--;
+		}
+		line = 0;
+	}
+}
+function clearPlacement(index) {
+	console.log(index);
+	for (let i = 0; i < grid.length; i++) {
+		grid[i].splice(index, 1);
+		grid[i].unshift([false]);
+	}
+}
 function drawL(newX, newY) {
 	if (!rotateFlag) {
 		ctx.fillRect(newX, newY, squareDimensions, squareDimensions);
@@ -154,14 +291,7 @@ function drawL(newX, newY) {
 			squareDimensions,
 			squareDimensions
 		);
-		currentBlock.x3 = 2;
-		currentBlock.y3 = 0;
-		currentBlock.x2 = 1;
-		currentBlock.y2 = 0;
-		currentBlock.x1 = 0;
-		currentBlock.y1 = 0;
-		currentBlock.x4 = 0;
-		currentBlock.y4 = 1;
+		gridPlacement();
 	} else {
 		ctx.fillRect(newX, newY, squareDimensions, squareDimensions);
 		ctx.fillRect(
@@ -182,14 +312,7 @@ function drawL(newX, newY) {
 			squareDimensions,
 			squareDimensions
 		);
-		currentBlock.x3 = 0;
-		currentBlock.y3 = 2;
-		currentBlock.x2 = 0;
-		currentBlock.y2 = 1;
-		currentBlock.x1 = 0;
-		currentBlock.y1 = 0;
-		currentBlock.x4 = -1;
-		currentBlock.y4 = 2;
+		gridPlacement();
 	}
 }
 function clearUnrotatedL() {
@@ -288,14 +411,7 @@ function drawLine(newX, newY) {
 			squareDimensions,
 			squareDimensions
 		);
-		currentBlock.x2 = 1;
-		currentBlock.y2 = 0;
-		currentBlock.x3 = 2;
-		currentBlock.y3 = 0;
-		currentBlock.x1 = 0;
-		currentBlock.y1 = 0;
-		currentBlock.x4 = 3;
-		currentBlock.y4 = 0;
+		gridPlacement();
 	} else {
 		ctx.fillRect(newX, newY, squareDimensions, squareDimensions);
 
@@ -319,14 +435,7 @@ function drawLine(newX, newY) {
 			squareDimensions,
 			squareDimensions
 		);
-		currentBlock.x2 = 0;
-		currentBlock.y2 = 1;
-		currentBlock.x3 = 0;
-		currentBlock.y3 = 2;
-		currentBlock.x1 = 0;
-		currentBlock.y1 = 0;
-		currentBlock.x4 = 0;
-		currentBlock.y4 = 3;
+		gridPlacement();
 	}
 }
 function clearUnrotatedLine() {
@@ -389,14 +498,7 @@ function drawT(newX, newY) {
 			squareDimensions,
 			squareDimensions
 		);
-		currentBlock.x2 = 1;
-		currentBlock.y2 = 0;
-		currentBlock.x3 = 2;
-		currentBlock.y3 = 1;
-		currentBlock.x1 = 0;
-		currentBlock.y1 = 1;
-		currentBlock.x4 = 1;
-		currentBlock.y4 = 1;
+		gridPlacement();
 	} else {
 		ctx.fillRect(newX, newY, squareDimensions, squareDimensions);
 		ctx.fillRect(
@@ -417,14 +519,7 @@ function drawT(newX, newY) {
 			squareDimensions,
 			squareDimensions
 		);
-		currentBlock.x2 = 0;
-		currentBlock.y2 = 1;
-		currentBlock.x3 = 0;
-		currentBlock.y3 = 2;
-		currentBlock.x1 = 0;
-		currentBlock.y1 = 0;
-		currentBlock.x4 = 1;
-		currentBlock.y4 = 1;
+		gridPlacement();
 	}
 }
 function clearUnrotatedT() {
@@ -490,14 +585,7 @@ function drawZ(newX, newY) {
 			squareDimensions,
 			squareDimensions
 		);
-		currentBlock.x2 = 1;
-		currentBlock.y2 = 1;
-		currentBlock.x3 = 0;
-		currentBlock.y3 = 1;
-		currentBlock.x1 = 1;
-		currentBlock.y1 = 0;
-		currentBlock.x4 = 0;
-		currentBlock.y4 = 2;
+		gridPlacement();
 	} else {
 		ctx.fillRect(newX, newY, squareDimensions, squareDimensions);
 
@@ -521,14 +609,7 @@ function drawZ(newX, newY) {
 			squareDimensions,
 			squareDimensions
 		);
-		currentBlock.x2 = 1;
-		currentBlock.y2 = 0;
-		currentBlock.x3 = 1;
-		currentBlock.y3 = 1;
-		currentBlock.x1 = 0;
-		currentBlock.y1 = 1;
-		currentBlock.x4 = 2;
-		currentBlock.y4 = 0;
+		gridPlacement();
 	}
 }
 function clearUnrotatedZ() {
@@ -590,22 +671,46 @@ function collisionRight() {
 		return true;
 	else return false;
 }
+function collisionLeft() {
+	if (
+		grid[coordX + currentBlock.x1 - 1][coordY - currentBlock.y1] === true ||
+		grid[coordX + currentBlock.x2 - 1][coordY - currentBlock.y2] === true ||
+		grid[coordX + currentBlock.x3 - 1][coordY - currentBlock.y3] === true ||
+		grid[coordX + currentBlock.x4 - 1][coordY - currentBlock.y4] === true
+	)
+		return true;
+	else return false;
+}
 let randomShape = 0;
 let randomColor = 0;
 setInterval(function() {
+	lineClear();
 	if (!collision()) {
 		redraw(x + directionX, y + directionY);
 		coordY++;
 		$('.coordinates').text(`${coordY} ${coordX} ${rotateFlag}`);
 	} else {
+		console.log(grid);
+		blockArray.push({
+			x1: currentBlock.x1,
+			y1: currentBlock.y1,
+			x2: currentBlock.x2,
+			y2: currentBlock.y2,
+			x3: currentBlock.x3,
+			y3: currentBlock.y3,
+			x4: currentBlock.x4,
+			y4: currentBlock.y4,
+			color: colors[randomColor]
+		});
 		randomShape = Math.floor(Math.random() * 5);
 		randomColor = Math.floor(Math.random() * 5);
-		shape = shapes[randomShape];
+		shape = 'line'; //shapes[randomShape];
 		ctx.fillStyle = colors[randomColor];
 		grid[coordX + currentBlock.x1][coordY - currentBlock.y1] = true;
 		grid[coordX + currentBlock.x2][coordY - currentBlock.y2] = true;
 		grid[coordX + currentBlock.x3][coordY - currentBlock.y3] = true;
 		grid[coordX + currentBlock.x4][coordY - currentBlock.y4] = true;
+		console.log(blockArray);
 		x = 0;
 		y = 0;
 		coordX = 0;
@@ -617,7 +722,14 @@ setInterval(function() {
 			coordY = 2;
 		}
 		if (shape === 'T') {
+			boundRight = 17;
 			coordY = 1;
+		}
+		if (shape === 'square') {
+			boundRight = 18;
+		}
+		if (shape === 'L') {
+			boundRight = 17;
 		}
 	}
 }, 1000);
