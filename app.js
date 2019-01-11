@@ -1,15 +1,18 @@
-let x = 290;
-let y = 170;
+let x = 0;
+let y = 0;
+let coordX = 0;
+let coordY = 0;
+let bottom = 26;
+let boundRight = 16;
+let boundLeft = 0;
 let squareDimensions = 30;
-let shape = 'line';
 let directionX = 0;
-let directionY = 1;
+let directionY = squareDimensions;
 let rotateFlag = false;
-let blockCounter = 0;
-let directionCount = 0;
-let previousX = 0;
-const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
+let lineClearCounter = squareDimensions;
+let shape = 'line';
+let shapes = ['line', 'Z', 'T', 'square', 'L'];
+let colors = ['purple', 'blue', 'red', 'yellow', 'green'];
 class Block {
 	constructor(x1, y1, x2, y2, x3, y3, x4, y4) {
 		this.x1 = x1;
@@ -22,116 +25,167 @@ class Block {
 		this.y4 = y4;
 	}
 }
-let blockArray = [];
-let currentBlock = new Block(0, 0, 0, 0, 0, 0, 0, 0);
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
 ctx.fillStyle = 'green';
+let blockArray = [];
+let grid = [];
+for (let i = 0; i <= 19; i++) {
+	grid[i] = [];
+	for (let j = 0; j <= bottom; j++) {
+		if (j === bottom) grid[i].push(true);
+		else grid[i].push([false]);
+	}
+}
+let currentBlock = new Block(0, 0, 0, 0, 0, 0, 0, 0);
 $(document).keydown(function(event) {
-	if (event.keyCode == 39) {
-		redraw(x + 10, y);
+	if (event.keyCode == 39 && coordX < boundRight && !collisionRight()) {
+		redraw(x + squareDimensions, y);
+		coordX++;
 	}
 });
 $(document).keydown(function(event) {
-	if (event.keyCode == 37) {
-		redraw(x - 10, y);
+	if (event.keyCode == 37 && coordX > boundLeft && !collisionLeft()) {
+		redraw(x - squareDimensions, y);
+		coordX--;
 	}
 });
 $(document).keydown(function(event) {
-	if (event.keyCode == 40) {
-		redraw(x, y + 10);
+	if (event.keyCode == 40 && !collision()) {
+		redraw(x, y + squareDimensions);
+		coordY++;
 	}
 });
 $(document).keydown(function(event) {
-	if (shape === 'L') {
-		clearL();
+	if (event.keyCode === 82 && !cantRotate()) {
+		rotate();
 	}
-	if (shape === 'square') {
-		clearSquare();
-	}
-	if (shape === 'line') {
-		clearLine();
-	}
-	if (shape === 'T') {
-		clearT();
-	}
-	if (shape === 'Z') {
-		clearZ();
-	}
-	if (event.keyCode === 82) {
-		if (rotateFlag) {
-			x = previousX;
-			y += directionCount;
-			previousX = 0;
-			//ctx.save();
-			// ctx.translate(x + 15, y + 15);
-			// ctx.rotate((90 * Math.PI) / 180);
-			// ctx.translate(-(x + 15), -(y + 15));
-			directionX = 0;
-			directionY = 1;
-			rotateFlag = false;
-			ctx.restore();
-		} else {
-			previousX = x;
-			ctx.save();
-			ctx.translate(x + 15, y + 15);
-			ctx.rotate((-90 * Math.PI) / 180);
-			ctx.translate(-(x + 15), -(y + 15));
-			directionX = -1;
-			directionY = 0;
-			rotateFlag = true;
+});
+function rotate() {
+	if (!rotateFlag) {
+		if (shape === 'L') {
+			clearUnrotatedL();
+			coordY += 2;
+			boundLeft = 1;
+			boundRight = 19;
+		}
+		if (shape === 'line') {
+			clearUnrotatedLine();
+			coordY += 3;
+			boundRight = 19;
+		}
+		if (shape === 'T') {
+			clearUnrotatedT();
+			coordY++;
+			boundRight = 18;
+		}
+		if (shape === 'Z') {
+			clearUnrotatedZ();
+			boundRight = 17;
+			coordY -= 1;
+		}
+	} else {
+		if (shape === 'L') {
+			clearRotatedL();
+			coordY -= 2;
+			boundLeft = 0;
+			boundRight = 17;
+		}
+		if (shape === 'line') {
+			clearRotatedLine();
+			coordY -= 3;
+			boundRight = 16;
+			boundLeft = 0;
+		}
+		if (shape === 'T') {
+			clearRotatedT();
+			coordY--;
+			boundRight = 17;
+		}
+		if (shape === 'Z') {
+			clearRotatedZ();
+			coordY += 1;
 		}
 	}
-});
-function redrawAll(newX, newY) {
-	for (let i = 0; i < blockArray.length; i++) {
-		ctx.fillStyle = blockArray[i].fillStyle;
-		ctx.clearRect(
-			blockArray[i].x1,
-			blockArray[i].y1,
-			squareDimensions,
-			squareDimensions
-		);
-		ctx.clearRect(
-			blockArray[i].x2,
-			blockArray[i].y2,
-			squareDimensions,
-			squareDimensions
-		);
-		ctx.clearRect(
-			blockArray[i].x3,
-			blockArray[i].y3,
-			squareDimensions,
-			squareDimensions
-		);
-		ctx.clearRect(
-			blockArray[i].x4,
-			blockArray[i].y4,
-			squareDimensions,
-			squareDimensions
-		);
-		ctx.fillRect(
-			blockArray[i].x1 + newX,
-			blockArray[i].y1 + newY,
-			squareDimensions,
-			squareDimensions
-		);
-		ctx.fillRect(
-			blockArray[i].x2 + newX,
-			blockArray[i].y2 + newY,
-			squareDimensions,
-			squareDimensions
-		);
-		ctx.fillRect(
-			blockArray[i].x3 + newX,
-			blockArray[i].y3 + newY,
-			squareDimensions,
-			squareDimensions
-		);
-		ctx.fillRect(
-			blockArray[i].x4 + newX,
-			blockArray[i].y4 + newY,
-			squareDimensions,
-			squareDimensions
-		);
+	rotateFlag = !rotateFlag;
+}
+function moveDown(index) {
+	let count = 1;
+	for (let i = 0; i <= blockArray.length; i++) {
+		if (count === 1) {
+			if (blockArray[i].y1 <= index) {
+				ctx.fillStyle = blockArray[i].colorType;
+				ctx.clearRect(
+					blockArray[i].x1,
+					blockArray[i].y1,
+					squareDimensions,
+					squareDimensions
+				);
+				ctx.fillRect(
+					blockArray[i].x1,
+					blockArray[i].y1 + squareDimensions,
+					squareDimensions,
+					squareDimensions
+				);
+				blockArray[i].y1 += squareDimensions;
+			}
+		}
+		if (count === 2) {
+			if (blockArray[i].y2 <= index) {
+				ctx.fillStyle = blockArray[i].colorType;
+				ctx.clearRect(
+					blockArray[i].x2,
+					blockArray[i].y2,
+					squareDimensions,
+					squareDimensions
+				);
+				ctx.fillRect(
+					blockArray[i].x2,
+					blockArray[i].y2 + squareDimensions,
+					squareDimensions,
+					squareDimensions
+				);
+				blockArray[i].y2 += squareDimensions;
+			}
+		}
+		if (count === 3) {
+			if (blockArray[i].y3 <= index) {
+				ctx.fillStyle = blockArray[i].colorType;
+				ctx.clearRect(
+					blockArray[i].x3,
+					blockArray[i].y3,
+					squareDimensions,
+					squareDimensions
+				);
+				ctx.fillRect(
+					blockArray[i].x3,
+					blockArray[i].y3 + squareDimensions,
+					squareDimensions,
+					squareDimensions
+				);
+				blockArray[i].y3 += squareDimensions;
+			}
+		}
+		if (count === 4) {
+			if (blockArray[i].y4 <= index) {
+				ctx.fillStyle = blockArray[i].colorType;
+				ctx.clearRect(
+					blockArray[i].x4,
+					blockArray[i].y4,
+					squareDimensions,
+					squareDimensions
+				);
+				ctx.fillRect(
+					blockArray[i].x4,
+					blockArray[i].y4 + squareDimensions,
+					squareDimensions,
+					squareDimensions
+				);
+				blockArray[i].y4 += squareDimensions;
+			}
+			count = 0;
+		}
+		count++;
 	}
 }
 function redraw(newX, newY) {
@@ -158,36 +212,194 @@ function redraw(newX, newY) {
 	x = newX;
 	y = newY;
 }
-function drawL(newX, newY) {
-	ctx.fillRect(newX, newY, squareDimensions, squareDimensions);
-	currentBlock.x1 = newX;
-	currentBlock.y1 = newY;
-	ctx.fillRect(
-		newX + squareDimensions,
-		newY,
-		squareDimensions,
-		squareDimensions
-	);
-	currentBlock.x2 = newX + squareDimensions;
-	currentBlock.y2 = newY;
-	ctx.fillRect(
-		newX + squareDimensions * 2,
-		newY,
-		squareDimensions,
-		squareDimensions
-	);
-	currentBlock.x3 = newX + squareDimensions * 2;
-	currentBlock.y3 = newY;
-	ctx.fillRect(
-		newX,
-		newY - squareDimensions,
-		squareDimensions,
-		squareDimensions
-	);
-	currentBlock.x4 = newX;
-	currentBlock.y4 = newY - squareDimensions;
+function gridPlacement() {
+	if (shape === 'L') {
+		if (!rotateFlag) {
+			currentBlock.x3 = 2;
+			currentBlock.y3 = 0;
+			currentBlock.x2 = 1;
+			currentBlock.y2 = 0;
+			currentBlock.x1 = 0;
+			currentBlock.y1 = 0;
+			currentBlock.x4 = 0;
+			currentBlock.y4 = 1;
+		} else {
+			currentBlock.x3 = 0;
+			currentBlock.y3 = 2;
+			currentBlock.x2 = 0;
+			currentBlock.y2 = 1;
+			currentBlock.x1 = 0;
+			currentBlock.y1 = 0;
+			currentBlock.x4 = -1;
+			currentBlock.y4 = 2;
+		}
+	}
+	if (shape === 'line') {
+		if (!rotateFlag) {
+			currentBlock.x2 = 1;
+			currentBlock.y2 = 0;
+			currentBlock.x3 = 2;
+			currentBlock.y3 = 0;
+			currentBlock.x1 = 0;
+			currentBlock.y1 = 0;
+			currentBlock.x4 = 3;
+			currentBlock.y4 = 0;
+		} else {
+			currentBlock.x2 = 0;
+			currentBlock.y2 = 1;
+			currentBlock.x3 = 0;
+			currentBlock.y3 = 2;
+			currentBlock.x1 = 0;
+			currentBlock.y1 = 0;
+			currentBlock.x4 = 0;
+			currentBlock.y4 = 3;
+		}
+	}
+	if (shape === 'T') {
+		if (!rotateFlag) {
+			currentBlock.x2 = 1;
+			currentBlock.y2 = 0;
+			currentBlock.x3 = 2;
+			currentBlock.y3 = 1;
+			currentBlock.x1 = 0;
+			currentBlock.y1 = 1;
+			currentBlock.x4 = 1;
+			currentBlock.y4 = 1;
+		} else {
+			currentBlock.x2 = 0;
+			currentBlock.y2 = 1;
+			currentBlock.x3 = 0;
+			currentBlock.y3 = 2;
+			currentBlock.x1 = 0;
+			currentBlock.y1 = 0;
+			currentBlock.x4 = 1;
+			currentBlock.y4 = 1;
+		}
+	}
+	if (shape === 'Z') {
+		if (!rotateFlag) {
+			currentBlock.x2 = 1;
+			currentBlock.y2 = 1;
+			currentBlock.x3 = 0;
+			currentBlock.y3 = 1;
+			currentBlock.x1 = 1;
+			currentBlock.y1 = 0;
+			currentBlock.x4 = 0;
+			currentBlock.y4 = 2;
+		} else {
+			currentBlock.x2 = 1;
+			currentBlock.y2 = 0;
+			currentBlock.x3 = 1;
+			currentBlock.y3 = 1;
+			currentBlock.x1 = 0;
+			currentBlock.y1 = 1;
+			currentBlock.x4 = 2;
+			currentBlock.y4 = 0;
+		}
+	}
 }
-function clearL() {
+function cantRotate() {
+	rotateFlag = !rotateFlag;
+	if (coordX <= 4 || coordX >= 15 || coordY >= 25) {
+		rotateFlag = !rotateFlag;
+		gridPlacement();
+		return true;
+	}
+	gridPlacement();
+	if (
+		grid[coordX + currentBlock.x1][coordY - currentBlock.y1] === true ||
+		grid[coordX + currentBlock.x2][coordY - currentBlock.y2] === true ||
+		grid[coordX + currentBlock.x3][coordY - currentBlock.y3] === true ||
+		grid[coordX + currentBlock.x4][coordY - currentBlock.y4] === true
+	) {
+		rotateFlag = !rotateFlag;
+		gridPlacement();
+		return true;
+	} else {
+		rotateFlag = !rotateFlag;
+		return false;
+	}
+}
+let linesToClear = [];
+function lineClear() {
+	let countClearLines = 0;
+	let line = 0;
+	let lineCount = grid[0].length - 2;
+	for (let i = 0; i < grid.length; i++) {
+		for (let j = 0; j < grid.length; j++) {
+			if (grid[j][lineCount] === true) line++;
+		}
+		if (line === grid.length) {
+			countClearLines++;
+			ctx.clearRect(
+				0,
+				(bottom - 1 - i) * squareDimensions,
+				squareDimensions * 20,
+				squareDimensions
+			);
+			clearPlacement(lineCount);
+			moveDown((lineCount - 1) * squareDimensions);
+			lineCount++;
+		}
+		lineCount--;
+		line = 0;
+	}
+}
+function clearPlacement(index) {
+	for (let i = 0; i < grid.length; i++) {
+		grid[i].splice(index, 1);
+		grid[i].unshift([false]);
+	}
+}
+function drawL(newX, newY) {
+	if (!rotateFlag) {
+		ctx.fillRect(newX, newY, squareDimensions, squareDimensions);
+
+		ctx.fillRect(
+			newX + squareDimensions,
+			newY,
+			squareDimensions,
+			squareDimensions
+		);
+
+		ctx.fillRect(
+			newX + squareDimensions * 2,
+			newY,
+			squareDimensions,
+			squareDimensions
+		);
+
+		ctx.fillRect(
+			newX,
+			newY - squareDimensions,
+			squareDimensions,
+			squareDimensions
+		);
+		gridPlacement();
+	} else {
+		ctx.fillRect(newX, newY, squareDimensions, squareDimensions);
+		ctx.fillRect(
+			newX,
+			newY + squareDimensions,
+			squareDimensions,
+			squareDimensions
+		);
+		ctx.fillRect(
+			newX,
+			newY + squareDimensions * 2,
+			squareDimensions,
+			squareDimensions
+		);
+		ctx.fillRect(
+			newX - squareDimensions,
+			newY,
+			squareDimensions,
+			squareDimensions
+		);
+		gridPlacement();
+	}
+}
+function clearUnrotatedL() {
 	ctx.clearRect(x, y, squareDimensions, squareDimensions);
 	ctx.clearRect(x + squareDimensions, y, squareDimensions, squareDimensions);
 	ctx.clearRect(
@@ -198,34 +410,55 @@ function clearL() {
 	);
 	ctx.clearRect(x, y - squareDimensions, squareDimensions, squareDimensions);
 }
+function clearRotatedL() {
+	ctx.clearRect(x, y, squareDimensions, squareDimensions);
+	ctx.clearRect(x, y + squareDimensions, squareDimensions, squareDimensions);
+	ctx.clearRect(
+		x,
+		y + squareDimensions * 2,
+		squareDimensions,
+		squareDimensions
+	);
+	ctx.clearRect(x - squareDimensions, y, squareDimensions, squareDimensions);
+}
+function clearL() {
+	if (!rotateFlag) {
+		clearUnrotatedL();
+	} else {
+		clearRotatedL();
+	}
+}
 function drawSquare(newX, newY) {
 	ctx.fillRect(newX, newY, squareDimensions, squareDimensions);
-	currentBlock.x1 = newX;
-	currentBlock.y1 = newY;
+
 	ctx.fillRect(
 		newX + squareDimensions,
 		newY,
 		squareDimensions,
 		squareDimensions
 	);
-	currentBlock.x2 = newX + squareDimensions;
-	currentBlock.y2 = newY;
+
 	ctx.fillRect(
 		newX,
 		newY - squareDimensions,
 		squareDimensions,
 		squareDimensions
 	);
-	currentBlock.x3 = newX;
-	currentBlock.y3 = newY - squareDimensions;
+
 	ctx.fillRect(
 		newX + squareDimensions,
 		newY - squareDimensions,
 		squareDimensions,
 		squareDimensions
 	);
-	currentBlock.x4 = newX + squareDimensions;
-	currentBlock.y4 = newY - squareDimensions;
+	currentBlock.x3 = 0;
+	currentBlock.y3 = 1;
+	currentBlock.x2 = 1;
+	currentBlock.y2 = 0;
+	currentBlock.x1 = 0;
+	currentBlock.y1 = 0;
+	currentBlock.x4 = 1;
+	currentBlock.y4 = 1;
 }
 function clearSquare() {
 	ctx.clearRect(x, y, squareDimensions, squareDimensions);
@@ -239,35 +472,57 @@ function clearSquare() {
 	);
 }
 function drawLine(newX, newY) {
-	ctx.fillRect(newX, newY, squareDimensions, squareDimensions);
-	currentBlock.x1 = newX;
-	currentBlock.y1 = newY;
-	ctx.fillRect(
-		newX + squareDimensions,
-		newY,
-		squareDimensions,
-		squareDimensions
-	);
-	currentBlock.x2 = newX + squareDimensions;
-	currentBlock.y2 = newY;
-	ctx.fillRect(
-		newX + squareDimensions * 2,
-		newY,
-		squareDimensions,
-		squareDimensions
-	);
-	currentBlock.x3 = newX + squareDimensions * 2;
-	currentBlock.y3 = newY;
-	ctx.fillRect(
-		newX + squareDimensions * 3,
-		newY,
-		squareDimensions,
-		squareDimensions
-	);
-	currentBlock.x4 = newX + squareDimensions * 3;
-	currentBlock.y4 = newY;
+	if (!rotateFlag) {
+		ctx.fillRect(newX, newY, squareDimensions, squareDimensions);
+
+		ctx.fillRect(
+			newX + squareDimensions,
+			newY,
+			squareDimensions,
+			squareDimensions
+		);
+
+		ctx.fillRect(
+			newX + squareDimensions * 2,
+			newY,
+			squareDimensions,
+			squareDimensions
+		);
+
+		ctx.fillRect(
+			newX + squareDimensions * 3,
+			newY,
+			squareDimensions,
+			squareDimensions
+		);
+		gridPlacement();
+	} else {
+		ctx.fillRect(newX, newY, squareDimensions, squareDimensions);
+
+		ctx.fillRect(
+			newX,
+			newY + squareDimensions,
+			squareDimensions,
+			squareDimensions
+		);
+
+		ctx.fillRect(
+			newX,
+			newY + squareDimensions * 2,
+			squareDimensions,
+			squareDimensions
+		);
+
+		ctx.fillRect(
+			newX,
+			newY + squareDimensions * 3,
+			squareDimensions,
+			squareDimensions
+		);
+		gridPlacement();
+	}
 }
-function clearLine() {
+function clearUnrotatedLine() {
 	ctx.clearRect(x, y, squareDimensions, squareDimensions);
 	ctx.clearRect(x + squareDimensions, y, squareDimensions, squareDimensions);
 	ctx.clearRect(
@@ -283,36 +538,75 @@ function clearLine() {
 		squareDimensions
 	);
 }
-function drawT(newX, newY) {
-	ctx.fillRect(newX, newY, squareDimensions, squareDimensions);
-	currentBlock.x1 = newX;
-	currentBlock.y1 = newY;
-	ctx.fillRect(
-		newX + squareDimensions,
-		newY,
+function clearRotatedLine() {
+	ctx.clearRect(x, y, squareDimensions, squareDimensions);
+	ctx.clearRect(x, y + squareDimensions, squareDimensions, squareDimensions);
+	ctx.clearRect(
+		x,
+		y + squareDimensions * 2,
 		squareDimensions,
 		squareDimensions
 	);
-	currentBlock.x2 = newX + squareDimensions;
-	currentBlock.y2 = newY;
-	ctx.fillRect(
-		newX + squareDimensions * 2,
-		newY,
+	ctx.clearRect(
+		x,
+		y + squareDimensions * 3,
 		squareDimensions,
 		squareDimensions
 	);
-	currentBlock.x3 = newX + squareDimensions * 2;
-	currentBlock.y3 = newY;
-	ctx.fillRect(
-		newX + squareDimensions,
-		newY + squareDimensions,
-		squareDimensions,
-		squareDimensions
-	);
-	currentBlock.x4 = newX + squareDimensions;
-	currentBlock.y4 = newY + squareDimensions;
 }
-function clearT() {
+function clearLine() {
+	if (!rotateFlag) {
+		clearUnrotatedLine();
+	} else {
+		clearRotatedLine();
+	}
+}
+function drawT(newX, newY) {
+	if (!rotateFlag) {
+		ctx.fillRect(newX, newY, squareDimensions, squareDimensions);
+		ctx.fillRect(
+			newX + squareDimensions,
+			newY,
+			squareDimensions,
+			squareDimensions
+		);
+		ctx.fillRect(
+			newX + squareDimensions * 2,
+			newY,
+			squareDimensions,
+			squareDimensions
+		);
+		ctx.fillRect(
+			newX + squareDimensions,
+			newY + squareDimensions,
+			squareDimensions,
+			squareDimensions
+		);
+		gridPlacement();
+	} else {
+		ctx.fillRect(newX, newY, squareDimensions, squareDimensions);
+		ctx.fillRect(
+			newX,
+			newY + squareDimensions,
+			squareDimensions,
+			squareDimensions
+		);
+		ctx.fillRect(
+			newX,
+			newY + squareDimensions * 2,
+			squareDimensions,
+			squareDimensions
+		);
+		ctx.fillRect(
+			newX + squareDimensions,
+			newY + squareDimensions,
+			squareDimensions,
+			squareDimensions
+		);
+		gridPlacement();
+	}
+}
+function clearUnrotatedT() {
 	ctx.clearRect(x, y, squareDimensions, squareDimensions);
 	ctx.clearRect(x + squareDimensions, y, squareDimensions, squareDimensions);
 	ctx.clearRect(
@@ -328,36 +622,81 @@ function clearT() {
 		squareDimensions
 	);
 }
-function drawZ(newX, newY) {
-	ctx.fillRect(newX, newY, squareDimensions, squareDimensions);
-	currentBlock.x1 = newX;
-	currentBlock.y1 = newY;
-	ctx.fillRect(
-		newX,
-		newY + squareDimensions,
+function clearRotatedT() {
+	ctx.clearRect(x, y, squareDimensions, squareDimensions);
+	ctx.clearRect(x, y + squareDimensions, squareDimensions, squareDimensions);
+	ctx.clearRect(
+		x,
+		y + squareDimensions * 2,
 		squareDimensions,
 		squareDimensions
 	);
-	currentBlock.x2 = newX;
-	currentBlock.y2 = newY + squareDimensions;
-	ctx.fillRect(
-		newX + squareDimensions,
-		newY + squareDimensions,
+	ctx.clearRect(
+		x + squareDimensions,
+		y + squareDimensions,
 		squareDimensions,
 		squareDimensions
 	);
-	currentBlock.x3 = newX + squareDimensions;
-	currentBlock.y3 = newY + squareDimensions;
-	ctx.fillRect(
-		newX + squareDimensions,
-		newY + squareDimensions * 2,
-		squareDimensions,
-		squareDimensions
-	);
-	currentBlock.x4 = newX;
-	currentBlock.y4 = newY + squareDimensions * 2;
 }
-function clearZ() {
+function clearT() {
+	if (!rotateFlag) {
+		clearUnrotatedT();
+	} else {
+		clearRotatedT();
+	}
+}
+function drawZ(newX, newY) {
+	if (!rotateFlag) {
+		ctx.fillRect(newX, newY, squareDimensions, squareDimensions);
+
+		ctx.fillRect(
+			newX,
+			newY + squareDimensions,
+			squareDimensions,
+			squareDimensions
+		);
+
+		ctx.fillRect(
+			newX + squareDimensions,
+			newY + squareDimensions,
+			squareDimensions,
+			squareDimensions
+		);
+
+		ctx.fillRect(
+			newX + squareDimensions,
+			newY + squareDimensions * 2,
+			squareDimensions,
+			squareDimensions
+		);
+		gridPlacement();
+	} else {
+		ctx.fillRect(newX, newY, squareDimensions, squareDimensions);
+
+		ctx.fillRect(
+			newX + squareDimensions,
+			newY,
+			squareDimensions,
+			squareDimensions
+		);
+
+		ctx.fillRect(
+			newX + squareDimensions,
+			newY + squareDimensions,
+			squareDimensions,
+			squareDimensions
+		);
+
+		ctx.fillRect(
+			newX + squareDimensions * 2,
+			newY + squareDimensions,
+			squareDimensions,
+			squareDimensions
+		);
+		gridPlacement();
+	}
+}
+function clearUnrotatedZ() {
 	ctx.clearRect(x, y, squareDimensions, squareDimensions);
 	ctx.clearRect(x, y + squareDimensions, squareDimensions, squareDimensions);
 	ctx.clearRect(
@@ -373,122 +712,130 @@ function clearZ() {
 		squareDimensions
 	);
 }
-function collision() {
-	if (blockArray.length === 0) return false;
-	for (let block of blockArray) {
-		console.log(
-			ones(block) || twos(block) || threes(block) || fours(block)
-		);
-		if (ones(block) || twos(block) || threes(block) || fours(block)) {
-			return true;
-		}
-	}
-	return false;
-}
-function ones(block) {
-	return (
-		(currentBlock.x1 >= block.x1 &&
-			currentBlock.y1 < block.y1 &&
-			currentBlock.x1 < block.x1 + squareDimensions &&
-			currentBlock.y1 > block.y1 - squareDimensions) ||
-		(currentBlock.x1 >= block.x2 &&
-			currentBlock.y1 < block.y2 &&
-			currentBlock.x1 < block.x2 + squareDimensions &&
-			currentBlock.y1 > block.y2 - squareDimensions) ||
-		(currentBlock.x1 >= block.x3 &&
-			currentBlock.y1 < block.y3 &&
-			currentBlock.x1 < block.x3 + squareDimensions &&
-			currentBlock.y1 > block.y3 - squareDimensions) ||
-		(currentBlock.x1 >= block.x4 &&
-			currentBlock.y1 < block.y4 &&
-			currentBlock.x1 < block.x4 + squareDimensions &&
-			currentBlock.y1 > block.y4 - squareDimensions)
+function clearRotatedZ() {
+	ctx.clearRect(x, y, squareDimensions, squareDimensions);
+	ctx.clearRect(x + squareDimensions, y, squareDimensions, squareDimensions);
+	ctx.clearRect(
+		x + squareDimensions,
+		y + squareDimensions,
+		squareDimensions,
+		squareDimensions
+	);
+	ctx.clearRect(
+		x + squareDimensions * 2,
+		y + squareDimensions,
+		squareDimensions,
+		squareDimensions
 	);
 }
-function twos(block) {
-	return (
-		(currentBlock.x2 >= block.x1 &&
-			currentBlock.y2 < block.y1 &&
-			currentBlock.x2 < block.x1 + squareDimensions &&
-			currentBlock.y2 > block.y1 - squareDimensions) ||
-		(currentBlock.x2 >= block.x2 &&
-			currentBlock.y2 < block.y2 &&
-			currentBlock.x2 < block.x2 + squareDimensions &&
-			currentBlock.y2 > block.y2 - squareDimensions) ||
-		(currentBlock.x2 >= block.x3 &&
-			currentBlock.y2 < block.y3 &&
-			currentBlock.x2 < block.x3 + squareDimensions &&
-			currentBlock.y2 > block.y3 - squareDimensions) ||
-		(currentBlock.x2 >= block.x4 &&
-			currentBlock.y2 < block.y4 &&
-			currentBlock.x2 < block.x4 + squareDimensions &&
-			currentBlock.y2 > block.y4 - squareDimensions)
-	);
-}
-function threes(block) {
-	return (
-		(currentBlock.x3 >= block.x1 &&
-			currentBlock.y3 < block.y1 &&
-			currentBlock.x3 < block.x1 + squareDimensions &&
-			currentBlock.y3 > block.y1 - squareDimensions) ||
-		(currentBlock.x3 >= block.x2 &&
-			currentBlock.y3 < block.y2 &&
-			currentBlock.x3 < block.x2 + squareDimensions &&
-			currentBlock.y3 > block.y2 - squareDimensions) ||
-		(currentBlock.x3 >= block.x3 &&
-			currentBlock.y3 < block.y3 &&
-			currentBlock.x3 < block.x3 + squareDimensions &&
-			currentBlock.y3 > block.y3 - squareDimensions) ||
-		(currentBlock.x3 >= block.x4 &&
-			currentBlock.y3 < block.y4 &&
-			currentBlock.x3 < block.x4 + squareDimensions &&
-			currentBlock.y3 > block.y4 - squareDimensions)
-	);
-}
-function fours(block) {
-	return (
-		(currentBlock.x4 + squareDimensions > block.x1 &&
-			currentBlock.y4 < block.y1 &&
-			currentBlock.x4 < block.x1 + squareDimensions &&
-			currentBlock.y4 > block.y1 - squareDimensions) ||
-		(currentBlock.x4 >= block.x2 &&
-			currentBlock.y4 < block.y2 &&
-			currentBlock.x4 < block.x2 + squareDimensions &&
-			currentBlock.y4 > block.y2 - squareDimensions) ||
-		(currentBlock.x4 >= block.x3 &&
-			currentBlock.y4 < block.y3 &&
-			currentBlock.x4 < block.x3 + squareDimensions &&
-			currentBlock.y4 > block.y3 - squareDimensions) ||
-		(currentBlock.x4 >= block.x4 &&
-			currentBlock.y4 < block.y4 &&
-			currentBlock.x4 < block.x4 + squareDimensions &&
-			currentBlock.y4 > block.y4 - squareDimensions)
-	);
-}
-let stopped = false;
-setInterval(function() {
-	if (!collision() && !stopped) {
-		if (rotateFlag) {
-			if (x > -10) redraw(x + directionX, y + directionY);
-			else stopped = true;
-			directionCount++;
-		} else {
-			if (y < 680) redraw(x + directionX, y + directionY);
-			else stopped = true;
-			directionCount = 0;
-		}
-
-		$('.coordinates').text(
-			`X4: ${currentBlock.x4 + squareDimensions} X1: ${blockArray[0].x1}`
-		);
+function clearZ() {
+	if (!rotateFlag) {
+		clearUnrotatedZ();
 	} else {
-		blockArray.push(currentBlock);
-		currentBlock = new Block();
-		blockCounter++;
-		x = 290;
-		y = 170;
-		directionCount = 0;
-		previousX = 0;
-		stopped = false;
+		clearRotatedZ();
 	}
-}, 100);
+}
+function collision() {
+	if (
+		grid[coordX + currentBlock.x1][coordY - currentBlock.y1 + 1] === true ||
+		grid[coordX + currentBlock.x2][coordY - currentBlock.y2 + 1] === true ||
+		grid[coordX + currentBlock.x3][coordY - currentBlock.y3 + 1] === true ||
+		grid[coordX + currentBlock.x4][coordY - currentBlock.y4 + 1] === true
+	)
+		return true;
+	else return false;
+}
+function collisionRight() {
+	if (
+		grid[coordX + currentBlock.x1 + 1][coordY - currentBlock.y1] === true ||
+		grid[coordX + currentBlock.x2 + 1][coordY - currentBlock.y2] === true ||
+		grid[coordX + currentBlock.x3 + 1][coordY - currentBlock.y3] === true ||
+		grid[coordX + currentBlock.x4 + 1][coordY - currentBlock.y4] === true
+	)
+		return true;
+	else return false;
+}
+function collisionLeft() {
+	if (
+		grid[coordX + currentBlock.x1 - 1][coordY - currentBlock.y1] === true ||
+		grid[coordX + currentBlock.x2 - 1][coordY - currentBlock.y2] === true ||
+		grid[coordX + currentBlock.x3 - 1][coordY - currentBlock.y3] === true ||
+		grid[coordX + currentBlock.x4 - 1][coordY - currentBlock.y4] === true
+	)
+		return true;
+	else return false;
+}
+let randomShape = 0;
+let randomColor = 0;
+setInterval(function() {
+	lineClear();
+	if (!collision()) {
+		redraw(x + directionX, y + directionY);
+		coordY++;
+	} else {
+		blockArray.push(
+			{
+				x1: (coordX + currentBlock.x1) * squareDimensions,
+				y1: (coordY - currentBlock.y1) * squareDimensions,
+				colorType: colors[randomColor]
+			},
+			{
+				x2: (coordX + currentBlock.x2) * squareDimensions,
+				y2: (coordY - currentBlock.y2) * squareDimensions,
+				colorType: colors[randomColor]
+			},
+			{
+				x3: (coordX + currentBlock.x3) * squareDimensions,
+				y3: (coordY - currentBlock.y3) * squareDimensions,
+				colorType: colors[randomColor]
+			},
+			{
+				x4: (coordX + currentBlock.x4) * squareDimensions,
+				y4: (coordY - currentBlock.y4) * squareDimensions,
+				colorType: colors[randomColor]
+			}
+		);
+		randomShape = Math.floor(Math.random() * 5);
+		randomColor = Math.floor(Math.random() * 5);
+		shape = shapes[randomShape];
+		ctx.fillStyle = colors[randomColor];
+		grid[coordX + currentBlock.x1][coordY - currentBlock.y1] = true;
+		grid[coordX + currentBlock.x2][coordY - currentBlock.y2] = true;
+		grid[coordX + currentBlock.x3][coordY - currentBlock.y3] = true;
+		grid[coordX + currentBlock.x4][coordY - currentBlock.y4] = true;
+		x = 0;
+		y = 0;
+		coordX = 0;
+		coordY = 0;
+		boundRight = 16;
+		rotateFlag = false;
+		currentBlock = new Block(0, 0, 0, 0, 0, 0, 0, 0);
+		if (shape === 'Z') {
+			boundRight = 18;
+			coordY = 2;
+		}
+		if (shape === 'T') {
+			boundRight = 17;
+			coordY = 1;
+		}
+		if (shape === 'square') {
+			boundRight = 18;
+		}
+		if (shape === 'L') {
+			boundRight = 17;
+		}
+	}
+}, 1000);
+// setTimeout(function() {
+// 	setInterval(function() {
+// 		if (!cantRotate()) rotate();
+// 	}, 500);
+// }, 6000);
+
+$('#test').click(function() {
+	ctx.translate(0, squareDimensions);
+	redrawAll(0, 0);
+});
+setInterval(function() {
+	redraw(x, y);
+}, 0);
