@@ -9,6 +9,7 @@ let squareDimensions = 30;
 let directionX = 0;
 let directionY = squareDimensions;
 let rotateFlag = false;
+let lineClearCounter = squareDimensions;
 let shape = 'line';
 let shapes = ['line', 'Z', 'T', 'square', 'L'];
 let colors = ['purple', 'blue', 'red', 'yellow', 'green'];
@@ -58,107 +59,116 @@ $(document).keydown(function(event) {
 });
 $(document).keydown(function(event) {
 	if (event.keyCode === 82 && !cantRotate()) {
-		if (!rotateFlag) {
-			if (shape === 'L') {
-				clearUnrotatedL();
-				coordY += 2;
-				boundLeft = 1;
-				boundRight = 19;
-				console.log(coordX);
-			}
-			if (shape === 'line') {
-				clearUnrotatedLine();
-				coordY += 3;
-				boundRight = 19;
-			}
-			if (shape === 'T') {
-				clearUnrotatedT();
-				coordY++;
-				boundRight = 18;
-			}
-			if (shape === 'Z') {
-				clearUnrotatedZ();
-				boundRight = 17;
-				coordY -= 1;
-			}
-		} else {
-			if (shape === 'L') {
-				clearRotatedL();
-				coordY -= 2;
-				boundLeft = 0;
-				boundRight = 17;
-			}
-			if (shape === 'line') {
-				clearRotatedLine();
-				coordY -= 3;
-				boundRight = 16;
-				boundLeft = 0;
-			}
-			if (shape === 'T') {
-				clearRotatedT();
-				coordY--;
-				boundRight = 17;
-			}
-			if (shape === 'Z') {
-				clearRotatedZ();
-				coordY += 1;
-			}
-		}
-		rotateFlag = !rotateFlag;
+		rotate();
 	}
 });
-
+function rotate() {
+	if (!rotateFlag) {
+		if (shape === 'L') {
+			clearUnrotatedL();
+			coordY += 2;
+			boundLeft = 1;
+			boundRight = 19;
+			console.log(coordX);
+		}
+		if (shape === 'line') {
+			clearUnrotatedLine();
+			coordY += 3;
+			boundRight = 19;
+		}
+		if (shape === 'T') {
+			clearUnrotatedT();
+			coordY++;
+			boundRight = 18;
+		}
+		if (shape === 'Z') {
+			clearUnrotatedZ();
+			boundRight = 17;
+			coordY -= 1;
+		}
+	} else {
+		if (shape === 'L') {
+			clearRotatedL();
+			coordY -= 2;
+			boundLeft = 0;
+			boundRight = 17;
+		}
+		if (shape === 'line') {
+			clearRotatedLine();
+			coordY -= 3;
+			boundRight = 16;
+			boundLeft = 0;
+		}
+		if (shape === 'T') {
+			clearRotatedT();
+			coordY--;
+			boundRight = 17;
+		}
+		if (shape === 'Z') {
+			clearRotatedZ();
+			coordY += 1;
+		}
+	}
+	rotateFlag = !rotateFlag;
+}
 function redrawAll(newX, newY, index) {
-	for (let i = index; i < blockArray.length; i++) {
-		ctx.fillStyle = blockArray[i].colorType;
-		ctx.clearRect(
-			blockArray[i].x1,
-			blockArray[i].y1,
-			squareDimensions,
-			squareDimensions
-		);
-		ctx.clearRect(
-			blockArray[i].x2,
-			blockArray[i].y2,
-			squareDimensions,
-			squareDimensions
-		);
-		ctx.clearRect(
-			blockArray[i].x3,
-			blockArray[i].y3,
-			squareDimensions,
-			squareDimensions
-		);
-		ctx.clearRect(
-			blockArray[i].x4,
-			blockArray[i].y4,
-			squareDimensions,
-			squareDimensions
-		);
-		ctx.fillRect(
-			blockArray[i].x1 + newX,
-			blockArray[i].y1 + newY,
-			squareDimensions,
-			squareDimensions
-		);
-		ctx.fillRect(
-			blockArray[i].x2 + newX,
-			blockArray[i].y2 + newY,
-			squareDimensions,
-			squareDimensions
-		);
-		ctx.fillRect(
-			blockArray[i].x3 + newX,
-			blockArray[i].y3 + newY,
-			squareDimensions,
-			squareDimensions
-		);
-		ctx.fillRect(
-			blockArray[i].x4 + newX,
-			blockArray[i].y4 + newY,
-			squareDimensions,
-			squareDimensions
-		);
+	for (let i = 0; i < blockArray.length; i++) {
+		if (
+			blockArray[i].y1 < index &&
+			blockArray[i].y2 < index &&
+			blockArray[i].y3 < index &&
+			blockArray[i].y4 < index
+		) {
+			ctx.fillStyle = blockArray[i].colorType;
+			ctx.clearRect(
+				blockArray[i].x1,
+				blockArray[i].y1,
+				squareDimensions,
+				squareDimensions
+			);
+			ctx.clearRect(
+				blockArray[i].x2,
+				blockArray[i].y2,
+				squareDimensions,
+				squareDimensions
+			);
+			ctx.clearRect(
+				blockArray[i].x3,
+				blockArray[i].y3,
+				squareDimensions,
+				squareDimensions
+			);
+			ctx.clearRect(
+				blockArray[i].x4,
+				blockArray[i].y4,
+				squareDimensions,
+				squareDimensions
+			);
+			ctx.fillRect(
+				blockArray[i].x1 + newX,
+				blockArray[i].y1 + newY,
+				squareDimensions,
+				squareDimensions
+			);
+			ctx.fillRect(
+				blockArray[i].x2 + newX,
+				blockArray[i].y2 + newY,
+				squareDimensions,
+				squareDimensions
+			);
+			ctx.fillRect(
+				blockArray[i].x3 + newX,
+				blockArray[i].y3 + newY,
+				squareDimensions,
+				squareDimensions
+			);
+			ctx.fillRect(
+				blockArray[i].x4 + newX,
+				blockArray[i].y4 + newY,
+				squareDimensions,
+				squareDimensions
+			);
+		}
 	}
 }
 function redraw(newX, newY) {
@@ -293,7 +303,9 @@ function cantRotate() {
 		return false;
 	}
 }
+let linesToClear = [];
 function lineClear() {
+	let countClearLines = 0;
 	let line = 0;
 	let lineCount = grid[0].length - 2;
 	for (let i = 0; i < grid.length; i++) {
@@ -301,6 +313,7 @@ function lineClear() {
 			if (grid[j][lineCount] === true) line++;
 		}
 		if (line === grid.length) {
+			countClearLines++;
 			ctx.clearRect(
 				0,
 				(bottom - 1 - i) * squareDimensions,
@@ -309,10 +322,26 @@ function lineClear() {
 			);
 			clearPlacement(lineCount);
 			console.log((bottom - 2 - i) * squareDimensions);
-			redrawAll(0, squareDimensions * (i + 1), i + 1);
+			redrawAll(
+				0,
+				(i + 1) * squareDimensions,
+				squareDimensions * lineCount + 1
+			);
+			lineCount++;
 		}
 		lineCount--;
 		line = 0;
+	}
+	//clearMultipleLines(countClearLines, linesToClear);
+}
+function clearMultipleLines(countClearLines, linesToClear) {
+	console.log(countClearLines);
+	for (let i = 0; i < countClearLines; i++) {
+		redrawAll(
+			0,
+			(i + 1) * squareDimensions,
+			squareDimensions * linesToClear[i]
+		);
 	}
 }
 function clearPlacement(index) {
@@ -788,6 +817,14 @@ setInterval(function() {
 		}
 	}
 }, 1000);
+// setInterval(function() {
+// 	if (!cantRotate()) rotate();
+// }, 10000);
+
+$('#test').click(function() {
+	ctx.translate(0, squareDimensions);
+	redrawAll(0, 0);
+});
 setInterval(function() {
 	redraw(x, y);
 }, 0);
